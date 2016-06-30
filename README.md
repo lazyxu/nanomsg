@@ -304,9 +304,9 @@ Ubuntu虚拟机的ip地址和端口号tcp://192.168.250.135:5555
 tcp://115.159.36.21:5555
 tcp://115.29.39.184:5555
 pair 成功
-bus 成功
+bus 失败，需要至少3个外网IP我只有两个啊orz
 
-ws://115.159.36.21:5555
+ws://115.159.36.21:5555 失败
 
 ##### Mac OS与Cent OS服务器的tcp通信 
 tcp://115.159.36.21:5555
@@ -330,6 +330,7 @@ PAIR - simple one-to-one communication
 	#include "nanomsg/nn.h"
 	#include "nanomsg/pair.h"
 	#include "nanomsg/bus.h"
+	#include "nanomsg/tcp.h"
 
 void recv_msg(int sock)
 {
@@ -347,58 +348,71 @@ void recv_msg(int sock)
 
 int main (const int argc, const char **argv)
 {
-    char url[100];
-    
-    int sock = nn_socket (AF_SP, NN_PAIR);
-    if(sock < 0) {
-        fprintf(stderr, "fail to create socket: %s\n", nn_strerror(errno));
-        exit(errno);
-    }
-    // 本机测试，本地局域网测试
-    printf("please input the url...\n");
-    scanf("%s",url);  // ipc:///tmp/pair.ipc 两个进程间的通信
-    if ( nn_bind(sock, url) >= 0 )
-        printf("bind successful\n");
-    else {
-        fprintf(stderr, "fail to bind to %s : %s\n", url, nn_strerror(errno));
-        if ( nn_connect(sock, url) >= 0 )
-            printf("connect successful\n");
+    int sock;
+    char transport[10];
+    // choose transport : bus pair
+    printf("please choose the transport...\n");
+    while (1) {
+        scanf("%s",transport);
+        if (strcmp(transport, "pair")==0)
+            sock = nn_socket (AF_SP, NN_PAIR);
+        else if (strcmp(transport, "bus")==0)
+            sock = nn_socket (AF_SP, NN_BUS);
         else {
-            fprintf(stderr, "fail to connect to %s : %s\n", url, nn_strerror(errno));
+            printf("no such transport\n");
+            continue;
+        }
+        if(sock < 0) {
+            printf("fail to create socket: %s\n", nn_strerror(errno));
             exit(errno);
         }
+        break;
     }
-    // 联网测试
-//    printf("please input the bind url...\n");
-//    scanf("%s",url);  // ipc:///tmp/pair.ipc 两个进程间的通信
-//    if ( nn_bind(sock, url) >= 0 )
-//        printf("bind successful\n");
-//    else {
-//        fprintf(stderr, "fail to bind to %s : %s\n", url, nn_strerror(errno));
-//        exit(errno);
-//    }
-//    
-//    printf("please input the connect url...\n");
-//    scanf("%s",url);  // ipc:///tmp/pair.ipc 两个进程间的通信
-//    if ( nn_connect(sock, url) >= 0 )
-//        printf("connect successful\n");
-//    else {
-//        fprintf(stderr, "fail to connect to %s : %s\n", url, nn_strerror(errno));
-//        exit(errno);
-//    }
     
-    int to = 100;
+    char bindOrConnect[10], url[100], next;
+    int flag;
+    // choose protocol
+    // ipc://tmp/pair.ipc
+    // tcp://115.29.39.184:5555
+    printf("bind/connect protocol://url\n");
+    while (1) {
+        scanf("%s",bindOrConnect);
+        scanf("%s",url);
+        if (strcmp(bindOrConnect, "bind")==0)
+            flag = nn_bind(sock, url);
+        else if (strcmp(bindOrConnect, "connect")==0)
+            flag = nn_connect(sock, url);
+        else {
+            printf("please select bind/connect\n");
+            continue;
+        }
+        if ( flag >= 0 )
+            printf("%s successful\n", bindOrConnect);
+        else {
+            printf("fail to %s to %s : %s\n", bindOrConnect, url, nn_strerror(errno));
+            continue;
+        }
+        printf("do you want to do next?(y/n)\n");
+        scanf("%c", &next);
+        if ( next=='y') {
+            break;
+        }
+        else {
+            printf("continue\n");
+        }
+    }
+    
+    int to = 100; // timeout
     if(nn_setsockopt (sock, NN_SOL_SOCKET, NN_RCVTIMEO, &to, sizeof (to)) < 0) {
-        fprintf(stderr, "fail to set sorket opts: %sn", nn_strerror(errno));
+        printf("fail to set sorket opts: %sn", nn_strerror(errno));
         exit(errno);
     }
     
+    // sub thread: receive message
     pthread_t thread;
-    
-    // 创建一个线程接收信息
     pthread_create(&thread, NULL, (void *)(&recv_msg), (void *)sock);
     
-    // 主线程发送信息
+    // main thread: send message
     char msg[1024];
     printf("now you can send messages...\n");
     while(1) {
@@ -406,7 +420,7 @@ int main (const int argc, const char **argv)
         if (strcmp(msg, "q")==0)
             break;
         printf ("SENDING \"%s\"\n", msg);
-        size_t sz_n = strlen (msg) + 1; // '\0' too
+        size_t sz_n = strlen (msg) + 1;
         nn_send(sock, msg, sz_n, 0);
     }
     printf("exit\n");
