@@ -114,7 +114,7 @@
 			* [ ] trie.c   trie.h
 			* [ ] xpub.c   xpub.h
 			* [ ] xsub.c   xsub.h
-		* [ ] reqrep
+		* [ ] reprep
 			* [ ] rep.c   rep.h
 			* [ ] req.c   req.h
 			* [ ] task.c   task.h
@@ -294,16 +294,19 @@ echo "/usr/local/lib" >> /etc/ld.so.conf
 ldconfig
 gcc  main.c -o main -lpthread -lnanomsg
 
-#### 已测试案例
-##### Mac OS与Ubuntu虚拟机的tcp通信pair模式  
-本地ipc通信，pair模式，bus模式
-##### Mac OS与Ubuntu虚拟机的tcp通信pair模式   
+#### 测试案例
+##### 本地Mac OS与Ubuntu虚拟机的测试
+本地ipc通信，pair模式，bus模式 
 分别测试了Mac OS的ip地址和端口号tcp://10.189.99.235:5555  
 Ubuntu虚拟机的ip地址和端口号tcp://192.168.250.135:5555  
 
-##### 两台Cent OS服务器的tcp通信 
+##### 两台Cent OS服务器和本地Mac OS的测试
 tcp://115.159.36.21:5555
 tcp://115.29.39.184:5555
+pair 成功
+bus 成功
+
+ws://115.159.36.21:5555
 
 ##### Mac OS与Cent OS服务器的tcp通信 
 tcp://115.159.36.21:5555
