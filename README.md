@@ -288,7 +288,7 @@ gcc  main.c -o main -lpthread -lnanomsg
 #### Cent OS服务器下  
 yum install cmake
 git失败
-scp -r /Users/meteor/github/nanomsg-master root@115.159.36.21:/home
+scp -r /Users/meteor/github/nanomsg-master root@115.159.36.21:/home/root
 cp libnanomsg.so.5.0.0 /usr/local/lib
 echo "/usr/local/lib" >> /etc/ld.so.conf
 ldconfig
@@ -300,6 +300,10 @@ gcc  main.c -o main -lpthread -lnanomsg
 ##### Mac OS与Ubuntu虚拟机的tcp通信pair模式   
 分别测试了Mac OS的ip地址和端口号tcp://10.189.99.235:5555  
 Ubuntu虚拟机的ip地址和端口号tcp://192.168.250.135:5555  
+
+##### 两台Cent OS服务器的tcp通信 
+tcp://115.159.36.21:5555
+tcp://115.29.39.184:5555
 
 ##### Mac OS与Cent OS服务器的tcp通信 
 tcp://115.159.36.21:5555
